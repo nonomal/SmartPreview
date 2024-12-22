@@ -79,16 +79,45 @@ function defineButton(ctx: ContentScriptContext) {
 }
 
 async function contentClickHandle(event: any) {
-  if (!event.shiftKey) return;
-  event.preventDefault();
-  event.stopPropagation();
   const url = getLinkUrl(event);
+  if (!url) return;
 
-  if (url) {
-    await browser.runtime.sendMessage({
-      action: 'openPopup',
+  try {
+    // 先检查是否按下 shift 键
+    if (event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      await browser.runtime.sendMessage({
+        action: 'openPopup',
+        url,
+      });
+      return;
+    }
+
+    // 先暂时阻止默认事件
+    event.preventDefault();
+    event.stopPropagation();
+
+    // 检查是否需要自动小窗
+    const response = await browser.runtime.sendMessage({
+      action: 'shouldOpenInPopup',
       url,
     });
+
+    if (response?.shouldOpenInPopup) {
+      // 需要小窗打开
+      await browser.runtime.sendMessage({
+        action: 'openPopup',
+        url,
+      });
+    } else {
+      // 不需要小窗时，手动触发链接跳转
+      window.location.href = url;
+    }
+  } catch (error) {
+    console.error('Error in contentClickHandle:', error);
+    // 发生错误时手动触发链接跳转
+    window.location.href = url;
   }
 }
 

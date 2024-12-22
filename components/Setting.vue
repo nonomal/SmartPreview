@@ -107,6 +107,60 @@ onMounted(async () => {
       </div>
     </div>
 
+    <div class="flex flex-col justify-start gap-[0.5rem]">
+      <h2 class="card-title">自动小窗阈值</h2>
+      <div class="form-control flex-1">
+        <label class="label">
+          <span class="label-text">打开次数超过该值时自动使用小窗打开</span>
+          <span class="label-text">{{ setting.autoSmartThreshold }}次</span>
+        </label>
+        <input
+          step="1"
+          type="range"
+          min="1"
+          max="10"
+          v-model.lazy.number="setting.autoSmartThreshold"
+          class="range"
+        />
+      </div>
+    </div>
+
+    <div class="flex flex-col justify-start gap-[0.5rem]">
+      <h2 class="card-title">网站访问统计</h2>
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>网站</th>
+              <th>访问次数</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(count, host) in setting.urlOpenCount" :key="host">
+              <td class="flex items-center gap-2">
+                <img 
+                  :src="`https://api.faviconkit.com/${host}/32`" 
+                  :alt="host"
+                  class="w-8 h-8 rounded-full"
+                />
+                <span>{{ host }}</span>
+              </td>
+              <td>{{ count }}</td>
+              <td>
+                <button 
+                  class="btn btn-xs btn-error" 
+                  @click="setting.urlOpenCount[host] = 0"
+                >
+                  重置
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <button class="btn btn-outline" @click="resetSetting">
       {{ i18n.t("resetSetting") }}
     </button>

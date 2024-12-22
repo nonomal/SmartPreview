@@ -7,10 +7,30 @@ export default defineBackground(() => {
   browser.runtime.onMessage.addListener(async message => {
     if (message.action === 'openPopup') {
       await openPopup(message);
+    } else if (message.action === 'shouldOpenInPopup') {
+      return await shouldOpenInPopup(message);
     } else if (message.action === 'closePopup') {
       await closePopup(message);
     }
   });
+
+  async function shouldOpenInPopup(message: any) {
+    // 获取最新设置
+    const storedSetting = await storage.getItem(StorageId);
+    setting.value = storedSetting
+      ? JSON.parse(storedSetting as string)
+      : defaultSetting;
+
+    if (!setting.value) return { shouldOpenInPopup: false };
+
+    const url = new URL(message.url);
+    const urlHost = url.host;
+    
+    // 先检查是否需要小窗打开
+    const shouldOpenInPopup = setting.value.urlOpenCount[urlHost] >= setting.value.autoSmartThreshold;
+
+    return { shouldOpenInPopup };
+  }
 
   async function openPopup(message: any) {
     // 获取最新的设置
@@ -18,11 +38,25 @@ export default defineBackground(() => {
     setting.value = storedSetting
       ? JSON.parse(storedSetting as string)
       : defaultSetting;
+
+    if (!setting.value) return;
+
     const url = new URL(message.url);
+    const urlHost = url.host;
+
+    // 更新打开次数 - 移到这里，只在实际使用小窗时计数
+    if (!setting.value.urlOpenCount[urlHost]) {
+      setting.value.urlOpenCount[urlHost] = 0;
+    }
+    setting.value.urlOpenCount[urlHost]++;
+
+    // 保存更新后的设置
+    await storage.setItem(StorageId, JSON.stringify(setting.value));
+
+    // 设置小窗参数并打开
     url.searchParams.set('isSmartPopup', 'true');
     let windowOptions;
 
-    if (!setting.value) return;
     if (setting.value.mode === Mode.Center) {
       windowOptions = await getCenterModeOptions();
     } else {

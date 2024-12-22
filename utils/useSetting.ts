@@ -26,6 +26,8 @@ interface Setting {
   height: number;
   lang: string;
   smartModeConfig: Record<string, blackItem>;
+  autoSmartThreshold: number;
+  urlOpenCount: Record<string, number>;
 }
 
 export interface blackItem {
@@ -43,6 +45,8 @@ export const defaultSetting: Setting = {
   closeOnBlur: false,
   lang: 'zh',
   smartModeConfig: {},
+  autoSmartThreshold: 3,
+  urlOpenCount: {},
 };
 
 // 使用单例模式
